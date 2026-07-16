@@ -672,6 +672,9 @@ app.jinja_loader = DictLoader({
 # --- UTILITIES ---
 
 def get_local_ip():
+    """
+    Attempts to get the local LAN IP address when running locally.
+    """
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         s.connect(('8.8.8.8', 80))
@@ -681,6 +684,22 @@ def get_local_ip():
     finally:
         s.close()
     return ip
+
+def get_base_url():
+    """
+    Dynamically returns the complete base URL (domain or IP).
+    - If hosted on a cloud server (like PythonAnywhere), it returns 'https://domain.com' or 'http://domain.com'.
+    - If running locally, it falls back to your Wi-Fi LAN IP (e.g., 'http://192.168.1.50:5000').
+    """
+    # Check if we are inside an active HTTP request context
+    if request:
+        host = request.host  # This automatically gets 'username.pythonanywhere.com' or '192.168.x.x:5000'
+        protocol = "https" if request.is_secure or request.headers.get('X-Forwarded-Proto') == 'https' else "http"
+        return f"{protocol}://{host}"
+    
+    # Absolute fallback if called outside of a request context
+    local_ip = get_local_ip()
+    return f"http://{local_ip}:5000"
 
 def purge_expired_files():
     db = get_db()
