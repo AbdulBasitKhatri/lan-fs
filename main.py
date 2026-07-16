@@ -484,7 +484,7 @@ BASE_TEMPLATE = """
         <header>
             <h1>🔒 LAN-FS </h1>
             <div class="network-info">
-                Active Storage Gateway: <strong>http://{{ ip_address }}:5000</strong><br>
+                Active Storage Gateway: <strong>{{ ip_address }}</strong><br>
                 <span>Instantly share files protected with custom rules with anyone on your local network.</span>
             </div>
         </header>
@@ -562,7 +562,7 @@ INDEX_TEMPLATE = """
     <div class="file-list">
         {% if files %}
             {% for file in files %}
-                {% set share_url = "http://" ~ ip_address ~ ":5000" ~ url_for('request_download', file_id=file.id) %}
+                {% set share_url = ip_address ~ url_for('request_download', file_id=file.id) %}
                 <div class="file-card">
                     <div class="file-card-top">
                         <div class="file-title">
@@ -905,7 +905,7 @@ if __name__ == '__main__':
     local_ip = get_base_url()
     print(f"\n" + "="*50)
     print(f"🚀 SERVER LIVE ON YOUR LOCAL NETWORK!")
-    print(f"👉 Access URL: http://{local_ip}:5000")
+    print(f"👉 Access URL: {local_ip}")
     print("="*50 + "\n")
     
     app.run(host='0.0.0.0', port=5000, debug=False)
