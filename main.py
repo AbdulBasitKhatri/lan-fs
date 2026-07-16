@@ -735,7 +735,7 @@ def index():
     purge_expired_files()
     db = get_db()
     files = db.execute("SELECT * FROM shared_files ORDER BY upload_time DESC").fetchall()
-    return render_template('index.html', ip_address=get_local_ip(), files=files)
+    return render_template('index.html', ip_address=get_base_url(), files=files)
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -816,7 +816,7 @@ def request_download(file_id):
         
     return render_template(
         'unlock.html', 
-        ip_address=get_local_ip(), 
+        ip_address=get_base_url(), 
         file_id=file_id, 
         original_name=row['original_name']
     )
@@ -874,7 +874,7 @@ def delete_request(file_id):
     if not row:
         flash("File already deleted or expired.")
         return redirect(url_for('index'))
-    return render_template('delete.html', ip_address=get_local_ip(), file_id=file_id, original_name=row['original_name'])
+    return render_template('delete.html', ip_address=get_base_url(), file_id=file_id, original_name=row['original_name'])
 
 @app.route('/delete-confirm/<int:file_id>', methods=['POST'])
 def delete_confirm(file_id):
@@ -902,7 +902,7 @@ def delete_confirm(file_id):
         return redirect(url_for('delete_request', file_id=file_id))
 
 if __name__ == '__main__':
-    local_ip = get_local_ip()
+    local_ip = get_base_url()
     print(f"\n" + "="*50)
     print(f"🚀 SERVER LIVE ON YOUR LOCAL NETWORK!")
     print(f"👉 Access URL: http://{local_ip}:5000")
