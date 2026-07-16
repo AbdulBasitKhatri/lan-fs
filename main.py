@@ -24,31 +24,32 @@ def get_db():
     if db is None:
         db = g._database = sqlite3.connect(DATABASE_FILE)
         db.row_factory = sqlite3.Row
+        # Force table check and creation every time a connection is opened
+        create_tables_safe(db)
     return db
+
+def create_tables_safe(db_conn):
+    """Ensures tables are built inside the active database connection context."""
+    db_conn.execute("""
+        CREATE TABLE IF NOT EXISTS shared_files (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            filename TEXT NOT NULL,
+            original_name TEXT NOT NULL,
+            password_hash TEXT,
+            delete_secret_hash TEXT NOT NULL,
+            upload_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            download_count INTEGER DEFAULT 0,
+            max_downloads INTEGER,
+            expire_time TIMESTAMP
+        )
+    """)
+    db_conn.commit()
 
 @app.teardown_appcontext
 def close_connection(exception):
     db = getattr(g, '_database', None)
     if db is not None:
         db.close()
-
-def init_db():
-    with app.app_context():
-        db = get_db()
-        db.execute("""
-            CREATE TABLE IF NOT EXISTS shared_files (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                filename TEXT NOT NULL,
-                original_name TEXT NOT NULL,
-                password_hash TEXT,
-                delete_secret_hash TEXT NOT NULL,
-                upload_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                download_count INTEGER DEFAULT 0,
-                max_downloads INTEGER,
-                expire_time TIMESTAMP
-            )
-        """)
-        db.commit()
 
 # --- HTML TEMPLATES ---
 
@@ -882,7 +883,6 @@ def delete_confirm(file_id):
         return redirect(url_for('delete_request', file_id=file_id))
 
 if __name__ == '__main__':
-    init_db()
     local_ip = get_local_ip()
     print(f"\n" + "="*50)
     print(f"🚀 SERVER LIVE ON YOUR LOCAL NETWORK!")
