@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Unlock File | LAN-FS{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 560px; margin: 0 auto;">
+    <div class="card-header" style="margin-bottom: 18px;">
+        <div class="header-title-container">
+            <div class="section-icon">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <div>
+                <h2 class="card-title">Protected File</h2>
+                <p class="card-description">Enter the access password to start downloading.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Target File Summary Callout -->
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 22px; padding: 12px 14px; background: var(--surface-raised); border: 1px solid var(--border); border-radius: var(--radius);">
+        <i class="fa-regular fa-file" style="color: var(--text-muted); font-size: 0.9rem; flex-shrink: 0;"></i>
+        <span style="color: var(--text-muted); font-size: 0.8rem; line-height: 1.4; min-width: 0;">
+            Requested file: <strong style="color: var(--text); font-family: var(--font-mono); font-weight: 600; word-break: break-all;" title="{{ original_name }}">{{ original_name }}</strong>
+        </span>
+    </div>
+
+    <!-- Password Unlock Form -->
+    <form action="{{ url_for('verify_and_download', file_id=file_id) }}" method="POST">
+        <div class="form-group">
+            <label for="password">
+                <i class="fa-solid fa-key label-icon"></i>
+                <span>Access Password</span>
+            </label>
+            
+            <div class="input-with-action">
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    placeholder="Enter file password" 
+                    required 
+                    autofocus 
+                    autocomplete="current-password"
+                >
+                <button 
+                    type="button" 
+                    class="btn-toggle-view" 
+                    onclick="togglePassword('password', this)"
+                    aria-label="Toggle password visibility"
+                >
+                    <i class="fa-solid fa-eye"></i>
+                    <span>Show</span>
+                </button>
+            </div>
+            
+            <span class="field-hint">This file was encrypted with a password by the uploader.</span>
+        </div>
+
+        <div style="margin-top: 22px; display: flex; flex-direction: column; gap: 10px;">
+            <button type="submit" class="btn-primary" style="width: 100%; min-height: 42px; font-size: 0.83rem; font-weight: 700; border-radius: var(--radius-sm);">
+                <i class="fa-solid fa-unlock"></i>
+                <span>Verify and Download</span>
+            </button>
+            
+            <a href="{{ url_for('index') }}" class="btn-action copy" style="width: 100%; min-height: 38px; text-align: center; justify-content: center; text-decoration: none;">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Cancel and Return</span>
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

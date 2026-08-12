@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | LAN-FS{% endblock %}
+
+{% block content %}
+<div class="card">
+    
+    <!-- Tab Controls -->
+    <div class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab('upload')">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <span>Upload File</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('files')">
+            <i class="fa-solid fa-folder-closed"></i>
+            <span>Active Shared Files</span>
+            {% if files %}
+                <span class="tab-badge">{{ files|length }}</span>
+            {% endif %}
+        </button>
+    </div>
+
+    <!-- Upload Tab Content -->
+    <div id="upload-tab" class="tab-content active">
+        <div class="card-header">
+            <div class="header-title-container">
+                <div class="section-icon">
+                    <i class="fa-solid fa-upload"></i>
+                </div>
+                <div>
+                    <h2 class="card-title">Share a File</h2>
+                    <p class="card-description">Upload a file to generate a local share link.</p>
+                </div>
+            </div>
+        </div>
+
+        <form action="{{ url_for('upload_file') }}" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="file_input">
+                    <i class="fa-solid fa-paperclip label-icon"></i>
+                    <span>Select File</span>
+                </label>
+                <input type="file" id="file_input" name="file" required>
+            </div>
+
+            <div class="form-grid">
+                <!-- Protection Password -->
+                <div class="form-group">
+                    <label for="password">
+                        <i class="fa-solid fa-key label-icon"></i>
+                        <span>Protection Password</span>
+                    </label>
+                    <div class="input-with-action">
+                        <input type="password" id="password" name="password" placeholder="Optional password">
+                        <button type="button" class="btn-toggle-view" onclick="togglePassword('password', this)" aria-label="Toggle password visibility">
+                            <i class="fa-solid fa-eye"></i>
+                            <span>Show</span>
+                        </button>
+                    </div>
+                    <span class="field-hint">Leave blank for public access</span>
+                </div>
+
+                <!-- Deletion Secret Key (REQUIRED BY main.py) -->
+                <div class="form-group">
+                    <label for="delete_secret">
+                        <i class="fa-solid fa-shield-halved label-icon"></i>
+                        <span>Deletion Secret Key <strong style="color: var(--danger);">*</strong></span>
+                    </label>
+                    <div class="input-with-action">
+                        <input type="password" id="delete_secret" name="delete_secret" placeholder="Key required to delete later" required>
+                        <button type="button" class="btn-toggle-view" onclick="togglePassword('delete_secret', this)" aria-label="Toggle deletion key visibility">
+                            <i class="fa-solid fa-eye"></i>
+                            <span>Show</span>
+                        </button>
+                    </div>
+                    <span class="field-hint">Secret key used to revoke this file later</span>
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <!-- Expiration Limits -->
+                <div class="form-group">
+                    <label>
+                        <i class="fa-solid fa-clock label-icon"></i>
+                        <span>Expiration Duration</span>
+                    </label>
+                    <div class="expiry-row">
+                        <input type="number" name="expiry_value" min="1" placeholder="e.g., 24">
+                        <select name="expiry_unit">
+                            <option value="minutes">Minutes</option>
+                            <option value="hours" selected>Hours</option>
+                            <option value="days">Days</option>
+                            <option value="never">Never</option>
+                        </select>
+                    </div>
+                    <span class="field-hint">Time after which the file is removed</span>
+                </div>
+
+                <!-- Max Downloads -->
+                <div class="form-group">
+                    <label for="max_downloads">
+                        <i class="fa-solid fa-download label-icon"></i>
+                        <span>Max Downloads Limit</span>
+                    </label>
+                    <input type="number" id="max_downloads" name="max_downloads" min="1" placeholder="Optional (e.g., 5)">
+                    <span class="field-hint">File self-destructs after X downloads</span>
+                </div>
+            </div>
+
+            <div class="upload-submit">
+                <button type="submit" class="btn-primary">
+                    <i class="fa-solid fa-share-nodes"></i>
+                    <span>Generate Share Link</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Active Files Tab Content -->
+    <div id="files-tab" class="tab-content">
+        <div class="card-header">
+            <div class="header-title-container">
+                <div class="section-icon section-icon-neutral">
+                    <i class="fa-solid fa-server"></i>
+                </div>
+                <div>
+                    <h2 class="card-title">Active Hosted Files</h2>
+                    <p class="card-description">Manage access, copy share links, or revoke active files.</p>
+                </div>
+            </div>
+        </div>
+
+        {% if files %}
+            <div class="file-list">
+                {% for file in files %}
+                    <div class="file-card">
+                        <div class="file-card-top">
+                            <div class="file-title">
+                                <div class="file-icon">
+                                    <i class="fa-regular fa-file"></i>
+                                </div>
+                                <span class="file-name" title="{{ file.original_name }}">{{ file.original_name }}</span>
+                                {% if file.password_hash %}
+                                    <span class="badge-lock secured">
+                                        <i class="fa-solid fa-lock"></i> Password Protected
+                                    </span>
+                                {% else %}
+                                    <span class="badge-lock public">
+                                        <i class="fa-solid fa-globe"></i> Public
+                                    </span>
+                                {% endif %}
+                            </div>
+
+                            <div class="actions">
+                                <button type="button" class="btn-action copy" id="copy-btn-{{ file.id }}" onclick="copyToClipboard('{{ base_url }}/download-request/{{ file.id }}', 'copy-btn-{{ file.id }}')">
+                                    <i class="fa-regular fa-copy"></i>
+                                    <span>Copy Link</span>
+                                </button>
+                                <a href="{{ url_for('request_download', file_id=file.id) }}" class="btn-action download">
+                                    <i class="fa-solid fa-download"></i>
+                                    <span>Download</span>
+                                </a>
+                                <a href="{{ url_for('delete_request', file_id=file.id) }}" class="btn-action delete">
+                                    <i class="fa-regular fa-trash-can"></i>
+                                    <span>Delete</span>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="link-row">
+                            <i class="fa-solid fa-link" style="color: var(--text-subtle);"></i>
+                            <span>{{ base_url }}/download-request/{{ file.id }}</span>
+                        </div>
+
+                        <div class="file-metadata">
+                            <span class="meta-item">
+                                <i class="fa-solid fa-download"></i> Downloads: {{ file.download_count }}{% if file.max_downloads %} / {{ file.max_downloads }}{% endif %}
+                            </span>
+                            {% if file.expire_time %}
+                                <span class="meta-item">
+                                    <i class="fa-regular fa-clock"></i> Expires: {{ file.expire_time }}
+                                </span>
+                            {% else %}
+                                <span class="meta-item">
+                                    <i class="fa-regular fa-clock"></i> No Expiration
+                                </span>
+                            {% endif %}
+                            <span class="meta-item">
+                                <i class="fa-regular fa-calendar"></i> Uploaded: {{ file.upload_time }}
+                            </span>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="fa-solid fa-box-open"></i>
+                </div>
+                <h3 style="margin: 0 0 6px; font-size: 0.95rem; color: var(--text);">No files shared yet</h3>
+                <p style="margin: 0; font-size: 0.82rem; color: var(--text-muted);">Switch to the upload tab to host a file on your local network.</p>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+
+<script>
+    function switchTab(tabName) {
+        const tabs = document.querySelectorAll('.tab-content');
+        const buttons = document.querySelectorAll('.tab-btn');
+
+        tabs.forEach(tab => tab.classList.remove('active'));
+        buttons.forEach(btn => btn.classList.remove('active'));
+
+        if (tabName === 'upload') {
+            document.getElementById('upload-tab').classList.add('active');
+            buttons[0].classList.add('active');
+        } else if (tabName === 'files') {
+            document.getElementById('files-tab').classList.add('active');
+            buttons[1].classList.add('active');
+        }
+    }
+</script>
+{% endblock %}

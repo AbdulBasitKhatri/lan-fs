@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Delete File | LAN-FS{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 560px; margin: 0 auto;">
+    <div class="card-header" style="margin-bottom: 18px;">
+        <div class="header-title-container">
+            <div class="section-icon" style="color: var(--danger); background: var(--danger-soft); border-color: var(--danger-border);">
+                <i class="fa-solid fa-trash-can"></i>
+            </div>
+            <div>
+                <h2 class="card-title">Delete File</h2>
+                <p class="card-description">Confirm secret key to permanently remove this file.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Targeted Target Summary Callout -->
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 22px; padding: 12px 14px; background: var(--danger-soft); border: 1px solid var(--danger-border); border-radius: var(--radius);">
+        <i class="fa-solid fa-triangle-exclamation" style="color: var(--danger); font-size: 0.9rem; flex-shrink: 0;"></i>
+        <span style="color: var(--text-muted); font-size: 0.8rem; line-height: 1.4; min-width: 0;">
+            Target file: <strong style="color: var(--danger); font-family: var(--font-mono); font-weight: 600; word-break: break-all;" title="{{ original_name }}">{{ original_name }}</strong>
+        </span>
+    </div>
+
+    <!-- Deletion Confirmation Form -->
+    <form action="{{ url_for('delete_confirm', file_id=file_id) }}" method="POST">
+        <div class="form-group">
+            <label for="delete_secret">
+                <i class="fa-solid fa-shield-halved label-icon"></i>
+                <span>Deletion Secret Key</span>
+            </label>
+            
+            <div class="input-with-action">
+                <input 
+                    type="password" 
+                    id="delete_secret" 
+                    name="delete_secret" 
+                    placeholder="Enter key set during upload" 
+                    required 
+                    autofocus 
+                    autocomplete="current-password"
+                >
+                <button 
+                    type="button" 
+                    class="btn-toggle-view" 
+                    onclick="togglePassword('delete_secret', this)"
+                    aria-label="Toggle deletion key visibility"
+                >
+                    <i class="fa-solid fa-eye"></i>
+                    <span>Show</span>
+                </button>
+            </div>
+            
+            <span class="field-hint">Enter the secret key configured when this file was created.</span>
+        </div>
+
+        <div style="margin-top: 22px; display: flex; flex-direction: column; gap: 10px;">
+            <button type="submit" class="btn-action delete" style="width: 100%; min-height: 42px; font-size: 0.83rem; font-weight: 700; border-radius: var(--radius-sm);">
+                <i class="fa-solid fa-trash-can"></i>
+                <span>Delete Permanently</span>
+            </button>
+            
+            <a href="{{ url_for('index') }}" class="btn-action copy" style="width: 100%; min-height: 38px; text-align: center; justify-content: center; text-decoration: none;">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Keep File and Return</span>
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
